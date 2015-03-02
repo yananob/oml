@@ -1,0 +1,187 @@
+<script type="text/javascript">
+<!--
+function confirmCancel(seq, no) {
+	if (!confirm("図書の予約を取り消します。\n取り消すと元に戻すことはできませんが、よろしいですか？")) {
+		return;
+	}
+	goPage('disp_log', {cmd: 'cancel_resv', seq: seq, no: no});
+}
+-->
+</script>
+
+<h3>登録済みカード</h3>
+<table class="list">
+	<tr>
+		<th class="sp-off">カード番号</th>
+		<th>メモ</th>
+		<th>予約</th>
+		<th>(取置)</th>
+		<th>貸出</th>
+		<th>(期限)</th>
+		<th>更新</th>
+		<th>操作</th>
+	</tr>
+	
+	</tr>
+	<% user.oml_acc.each_pair do |key, oml_acc|
+			log = OmlLog.new(oml_acc)
+	 %>
+		<tr>
+			<td class="sp-off">
+				<%= h oml_acc.oml_id %>
+			</td>
+			<td>
+				<%= h oml_acc.memo %>
+			</td>
+			<% if (log.books_resv.size < 8)
+					cell_style = "background-color: PaleTurquoise"
+				else
+					cell_style = ""
+				end
+			 %>
+			<td align="right" style="<%= h cell_style %>">
+				<%= h log.books_resv.size %>
+			</td>
+			<% if (log.books_hold_cnt > 0)
+					cell_style = "background-color: lightpink"
+				else
+					cell_style = ""
+				end
+			 %>
+			<td align="right" style="<%= h cell_style %>">
+				<%= h log.books_hold_cnt %>
+			</td>
+			<% if (log.books_rent.size < 8)
+					cell_style = "background-color: PaleTurquoise"
+				else
+					cell_style = ""
+				end
+			 %>
+			<td align="right" style="<%= h cell_style %>">
+				<%= h log.books_rent.size %>
+			</td>
+			<% if (log.books_near_limit > 0)
+					cell_style = "background-color: lightpink"
+				else
+					cell_style = ""
+				end
+			 %>
+			<td align="right" style="<%= h cell_style %>">
+				<%= h log.books_near_limit %>
+			</td>
+			<td>
+				<%= h oml_acc.crawled %>
+			</td>
+			<td nowrap>
+				<ul class="btns">
+					<!-- <li><a href="disp_log.rb?cmd=show&seq=<%= h key %>">ログ</a></li> -->
+					<li><a href="javascript:goPage('disp_log', {cmd: 'refresh', seq: '<%= h key %>'})">ログ更新</a></li>
+					<li><a href="edit_oml_acc.rb?cmd=edit&seq=<%= h key %>">編集</a></li>
+				</ul>
+			</td>
+		</tr>
+	<% end %>
+</table>
+
+
+<h3>予約中</h3>
+<table class="list">
+	<tr>
+		<th class="sp-off">名前</th>
+		<th class="sp-off">No</th>
+		<th>書名</th>
+		<th class="sp-off">受付</th>
+		<th>状態</th>
+		<th>期限</th>
+		<th>処理</th>
+	</tr>
+	<% user.oml_acc.each_pair do |key, oml_acc|
+			new_acc = true
+			log = OmlLog.new(oml_acc)
+			
+			log.books_resv.sort.each do |no, oml_book|
+			
+				if (oml_book.is_status_hold)
+					cell_style = "background-color: lightpink"
+				else
+					cell_style = ""
+				end
+	 %>
+		<tr>
+			<% if new_acc then %>
+				<td class="sp-off" rowspan="<%= log.books_resv.size %>"><%= h oml_acc.memo %></td>
+			<% 		new_acc = false
+			   end %>
+			<td style='<%= h cell_style %>' class="sp-off" align="right"><%= h oml_book.no %></td>
+			<td style='<%= h cell_style %>'><%= h oml_book.book_name.slice(1..60) %></td>
+			<td style='<%= h cell_style %>' class="sp-off"><%= h oml_book.reserved[5..10] %></td>
+			<td style='<%= h cell_style %>'><%= h oml_book.status %></td>
+			<td style='<%= h cell_style %>'><%= h oml_book.hold_limit[5..10] %></td>
+			<td style='<%= h cell_style %>'>
+				<ul class="btns">
+					<li><a href="javascript:confirmCancel('<%= h key %>', '<%= oml_book.no %>')">取消</li>
+				</ul>
+			</td>
+		</tr>
+	<% 		end
+	   end %>
+</table>
+<hr>
+
+
+<h3>貸出中</h3>
+<table class="list">
+	<tr>
+		<th class="sp-off">名前</th>
+		<th class="sp-off">No</th>
+		<th>書名</th>
+		<th class="sp-off">期限</th>
+		<th class="sp-off">延長</th>
+		<th>予約</th>
+		<th>処理</th>
+	</tr>
+	<% user.oml_acc.each_pair do |key, oml_acc|
+			new_acc = true
+			log = OmlLog.new(oml_acc)
+			
+			log.books_rent.sort.each do |no, oml_book|
+		
+			if (oml_book.exist_resv == "有")
+				cell_style = "background-color: lightpink"
+			else
+				cell_style = ""
+			end
+	 %>
+		<tr>
+			<% if new_acc then %>
+				<td class="sp-off" rowspan="<%= log.books_rent.size %>"><%= h oml_acc.memo %></td>
+			<% 		new_acc = false
+			   end %>
+			<td class="sp-off" align="right"><%= h oml_book.no %></td>
+			<td><%= h oml_book.book_name.slice(1..60) %></td>
+			<td class="sp-off"><%= h oml_book.ret_limit.to_s[5..10] %></td>
+			<td class="sp-off"><%= h oml_book.extended_date.to_s[5..10] %></td>
+			<td style='<%= h cell_style %>'><%= h oml_book.exist_resv %></td>
+			<td>
+				<% if (oml_book.extendable?) %>
+					<ul class="btns">
+						<li><a href="javascript:goPage('disp_log', {cmd: 'extend', seq: '<%= h key %>', no: '<%= oml_book.no %>'})">延長</li>
+					</ul>
+				<% end %>
+			</td>
+		</tr>
+	<%	end
+	end %>
+</table>
+
+
+
+<ul class="btns">
+	<li><a href="javascript:goPage('edit_oml_acc', {cmd: 'new'})">追加</a></li>
+</ul>
+
+<form name="menuForm" action="" method="POST">
+	<input type="hidden" name="cmd">
+	<input type="hidden" name="seq">
+	<input type="hidden" name="no">
+</form>

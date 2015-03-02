@@ -1,0 +1,18 @@
+Options +ExecCGI
+
+# if you run tDiary with symbolic link, use settings below.
+#Options +FollowSymLinks
+
+AddHandler cgi-script .rb
+#AddHandler cgi-script-debug .rb
+DirectoryIndex login.rb
+
+<Files "*.rhtml*">
+	deny from all
+</Files>
+
+# set library path
+# http://diaspar.jp/node/135
+# http://www.machu.jp/diary/20040806.html
+SetEnv GEM_HOME /virtual/nicher/lib/ruby/gems/1.8
+SetEnv RUBYLIB /virtual/nicher/lib/ruby:/virtual/nicher/lib/ruby/site_ruby/1.8
